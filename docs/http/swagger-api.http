@@ -1,0 +1,9 @@
+### Variables
+@baseUrl = http://localhost:8080
+
+### Get OpenAPI JSON
+GET {{baseUrl}}/v3/api-docs
+
+### Open Swagger UI
+GET {{baseUrl}}/swagger-ui.html
+
