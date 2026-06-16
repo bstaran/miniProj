@@ -10,5 +10,8 @@
 http://localhost:8080/swagger-ui.html
 ```
 
-![Swagger UI](assets/swagger_screenshot.png)
+## 주문 목록 조회
+![Orders](assets/get_orders.png)
 
+## 재고 부족 응답
+![insufficient_stock_orders](assets/insufficient_stock_orders.png)
