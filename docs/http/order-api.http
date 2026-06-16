@@ -18,7 +18,8 @@ POST {{baseUrl}}/orders
 Content-Type: application/json
 
 {
-  "productId": {{productId}}
+  "productId": {{productId}},
+  "quantity": 1
 }
 
 ### Get order
@@ -34,7 +35,7 @@ Content-Type: application/json
 {
   "name": "Mechanical Keyboard",
   "price": 30000,
-  "stockQuantity": 10
+  "stockQuantity": 1
 }
 
 ### Get order after product name update
@@ -45,7 +46,17 @@ POST {{baseUrl}}/orders
 Content-Type: application/json
 
 {
-  "productId": 999999
+  "productId": 999999,
+  "quantity": 1
+}
+
+### Create order with insufficient stock
+POST {{baseUrl}}/orders
+Content-Type: application/json
+
+{
+  "productId": {{productId}},
+  "quantity": 999999
 }
 
 ### Get missing order

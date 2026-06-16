@@ -4,6 +4,8 @@ import com.example.miniproj.dto.order.OrderCreateRequest;
 import com.example.miniproj.dto.order.OrderResponse;
 import com.example.miniproj.entity.Order;
 import com.example.miniproj.entity.Product;
+import com.example.miniproj.exception.InsufficientStockException;
+import com.example.miniproj.exception.InvalidOrderQuantityException;
 import com.example.miniproj.exception.OrderNotFoundException;
 import com.example.miniproj.exception.ProductNotFoundException;
 import com.example.miniproj.repository.OrderRepository;
@@ -27,9 +29,19 @@ public class OrderService {
 
     @Transactional
     public OrderResponse createOrder(OrderCreateRequest request) {
+        validateQuantity(request.quantity());
+
+        int updatedCount = productRepository.decreaseStock(request.productId(), request.quantity());
+        if (updatedCount == 0) {
+            if (!productRepository.existsById(request.productId())) {
+                throw new ProductNotFoundException(request.productId());
+            }
+            throw new InsufficientStockException(request.productId());
+        }
+
         Product product = productRepository.findById(request.productId())
                 .orElseThrow(() -> new ProductNotFoundException(request.productId()));
-        Order order = new Order(product);
+        Order order = new Order(product, request.quantity());
         Order savedOrder = orderRepository.save(order);
         return OrderResponse.from(savedOrder);
     }
@@ -43,5 +55,11 @@ public class OrderService {
     public Page<OrderResponse> getOrders(Pageable pageable) {
         return orderRepository.findAll(pageable)
                 .map(OrderResponse::from);
+    }
+
+    private void validateQuantity(Integer quantity) {
+        if (quantity == null || quantity <= 0) {
+            throw new InvalidOrderQuantityException();
+        }
     }
 }

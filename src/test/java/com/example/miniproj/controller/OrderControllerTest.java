@@ -44,13 +44,37 @@ class OrderControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
-                                  "productId": %d
+                                  "productId": %d,
+                                  "quantity": 1
                                 }
                                 """.formatted(productId)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").isNumber())
                 .andExpect(jsonPath("$.productId").value(productId))
-                .andExpect(jsonPath("$.productName").value("Keyboard"));
+                .andExpect(jsonPath("$.productName").value("Keyboard"))
+                .andExpect(jsonPath("$.quantity").value(1));
+    }
+
+    @Test
+    void createOrderDecreasesProductStock() throws Exception {
+        Long productId = createProduct("Keyboard", 30000, 10);
+
+        mockMvc.perform(post("/orders")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "productId": %d,
+                                  "quantity": 3
+                                }
+                                """.formatted(productId)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.productId").value(productId))
+                .andExpect(jsonPath("$.productName").value("Keyboard"))
+                .andExpect(jsonPath("$.quantity").value(3));
+
+        mockMvc.perform(get("/products/{id}", productId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.stockQuantity").value(7));
     }
 
     @Test
@@ -62,7 +86,8 @@ class OrderControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(orderId))
                 .andExpect(jsonPath("$.productId").value(productId))
-                .andExpect(jsonPath("$.productName").value("Mouse"));
+                .andExpect(jsonPath("$.productName").value("Mouse"))
+                .andExpect(jsonPath("$.quantity").value(1));
     }
 
     @Test
@@ -80,9 +105,11 @@ class OrderControllerTest {
                 .andExpect(jsonPath("$.content[0].id").value(keyboardOrderId))
                 .andExpect(jsonPath("$.content[0].productId").value(keyboardId))
                 .andExpect(jsonPath("$.content[0].productName").value("Keyboard"))
+                .andExpect(jsonPath("$.content[0].quantity").value(1))
                 .andExpect(jsonPath("$.content[1].id").value(mouseOrderId))
                 .andExpect(jsonPath("$.content[1].productId").value(mouseId))
                 .andExpect(jsonPath("$.content[1].productName").value("Mouse"))
+                .andExpect(jsonPath("$.content[1].quantity").value(1))
                 .andExpect(jsonPath("$.size").value(10))
                 .andExpect(jsonPath("$.totalElements").value(2));
     }
@@ -136,7 +163,8 @@ class OrderControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(orderId))
                 .andExpect(jsonPath("$.productId").value(productId))
-                .andExpect(jsonPath("$.productName").value("Gaming Monitor"));
+                .andExpect(jsonPath("$.productName").value("Gaming Monitor"))
+                .andExpect(jsonPath("$.quantity").value(1));
     }
 
     @Test
@@ -145,11 +173,95 @@ class OrderControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
-                                  "productId": 999
+                                  "productId": 999,
+                                  "quantity": 1
                                 }
                                 """))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").value("Product not found. id=999"));
+    }
+
+    @Test
+    void createOrderWithInsufficientStockReturnsBadRequest() throws Exception {
+        Long productId = createProduct("Keyboard", 30000, 1);
+
+        mockMvc.perform(post("/orders")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "productId": %d,
+                                  "quantity": 2
+                                }
+                                """.formatted(productId)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Insufficient stock. productId=" + productId));
+
+        mockMvc.perform(get("/products/{id}", productId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.stockQuantity").value(1));
+    }
+
+    @Test
+    void createOrderTwiceWithOneStockFailsOnSecondOrder() throws Exception {
+        Long productId = createProduct("Keyboard", 30000, 1);
+
+        mockMvc.perform(post("/orders")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "productId": %d,
+                                  "quantity": 1
+                                }
+                                """.formatted(productId)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.quantity").value(1));
+
+        mockMvc.perform(post("/orders")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "productId": %d,
+                                  "quantity": 1
+                                }
+                                """.formatted(productId)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Insufficient stock. productId=" + productId));
+
+        mockMvc.perform(get("/products/{id}", productId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.stockQuantity").value(0));
+    }
+
+    @Test
+    void createOrderWithZeroStockReturnsBadRequest() throws Exception {
+        Long productId = createProduct("Keyboard", 30000, 0);
+
+        mockMvc.perform(post("/orders")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "productId": %d,
+                                  "quantity": 1
+                                }
+                                """.formatted(productId)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Insufficient stock. productId=" + productId));
+    }
+
+    @Test
+    void createOrderWithInvalidQuantityReturnsBadRequest() throws Exception {
+        Long productId = createProduct("Keyboard", 30000, 10);
+
+        mockMvc.perform(post("/orders")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "productId": %d,
+                                  "quantity": 0
+                                }
+                                """.formatted(productId)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Order quantity must be greater than 0."));
     }
 
     @Test
@@ -182,7 +294,8 @@ class OrderControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
-                                  "productId": %d
+                                  "productId": %d,
+                                  "quantity": 1
                                 }
                                 """.formatted(productId)))
                 .andExpect(status().isCreated())
