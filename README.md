@@ -13,5 +13,9 @@ http://localhost:8080/swagger-ui.html
 ## 주문 목록 조회
 ![Orders](assets/get_orders.png)
 
+## 주문 조회 쿼리 (N+1 해결)
+`@EntityGraph(attributePaths = "product")`를 통해 초기에 엔티티를 로딩
+![Orders_query](assets/N+1_Query.png)
+
 ## 재고 부족 응답
 ![insufficient_stock_orders](assets/insufficient_stock_orders.png)
