@@ -1,0 +1,50 @@
+### Variables
+@baseUrl = http://localhost:8080
+@productId = 1
+@orderId = 1
+
+### Prepare product for order
+POST {{baseUrl}}/products
+Content-Type: application/json
+
+{
+  "name": "Keyboard",
+  "price": 30000,
+  "stockQuantity": 10
+}
+
+### Create order
+POST {{baseUrl}}/orders
+Content-Type: application/json
+
+{
+  "productId": {{productId}}
+}
+
+### Get order
+GET {{baseUrl}}/orders/{{orderId}}
+
+### Update ordered product name
+PUT {{baseUrl}}/products/{{productId}}
+Content-Type: application/json
+
+{
+  "name": "Mechanical Keyboard",
+  "price": 30000,
+  "stockQuantity": 10
+}
+
+### Get order after product name update
+GET {{baseUrl}}/orders/{{orderId}}
+
+### Create order with missing product
+POST {{baseUrl}}/orders
+Content-Type: application/json
+
+{
+  "productId": 999999
+}
+
+### Get missing order
+GET {{baseUrl}}/orders/999999
+

@@ -15,4 +15,11 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.NOT_FOUND)
                 .body(new ErrorResponse(exception.getMessage()));
     }
+
+    @ExceptionHandler(OrderNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleOrderNotFound(OrderNotFoundException exception) {
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(new ErrorResponse(exception.getMessage()));
+    }
 }
