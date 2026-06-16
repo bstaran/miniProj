@@ -1,5 +1,9 @@
 package com.example.miniproj.controller;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityManagerFactory;
+import org.hibernate.SessionFactory;
+import org.hibernate.stat.Statistics;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -9,6 +13,8 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -23,6 +29,12 @@ class OrderControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @Autowired
+    private EntityManager entityManager;
+
+    @Autowired
+    private EntityManagerFactory entityManagerFactory;
 
     @Test
     void createOrder() throws Exception {
@@ -51,6 +63,57 @@ class OrderControllerTest {
                 .andExpect(jsonPath("$.id").value(orderId))
                 .andExpect(jsonPath("$.productId").value(productId))
                 .andExpect(jsonPath("$.productName").value("Mouse"));
+    }
+
+    @Test
+    void getOrders() throws Exception {
+        Long keyboardId = createProduct("Keyboard", 30000, 10);
+        Long mouseId = createProduct("Mouse", 15000, 20);
+        Long keyboardOrderId = createOrder(keyboardId);
+        Long mouseOrderId = createOrder(mouseId);
+
+        mockMvc.perform(get("/orders")
+                        .param("page", "0")
+                        .param("size", "10"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content", hasSize(2)))
+                .andExpect(jsonPath("$.content[0].id").value(keyboardOrderId))
+                .andExpect(jsonPath("$.content[0].productId").value(keyboardId))
+                .andExpect(jsonPath("$.content[0].productName").value("Keyboard"))
+                .andExpect(jsonPath("$.content[1].id").value(mouseOrderId))
+                .andExpect(jsonPath("$.content[1].productId").value(mouseId))
+                .andExpect(jsonPath("$.content[1].productName").value("Mouse"))
+                .andExpect(jsonPath("$.size").value(10))
+                .andExpect(jsonPath("$.totalElements").value(2));
+    }
+
+    @Test
+    void getOrdersDoesNotCauseNPlusOne() throws Exception {
+        Long keyboardId = createProduct("Keyboard", 30000, 10);
+        Long mouseId = createProduct("Mouse", 15000, 20);
+        Long monitorId = createProduct("Monitor", 200000, 5);
+        createOrder(keyboardId);
+        createOrder(mouseId);
+        createOrder(monitorId);
+        entityManager.flush();
+        entityManager.clear();
+
+        Statistics statistics = entityManagerFactory
+                .unwrap(SessionFactory.class)
+                .getStatistics();
+        statistics.setStatisticsEnabled(true);
+        statistics.clear();
+
+        mockMvc.perform(get("/orders")
+                        .param("page", "0")
+                        .param("size", "10"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content", hasSize(3)))
+                .andExpect(jsonPath("$.content[0].productName").value("Keyboard"))
+                .andExpect(jsonPath("$.content[1].productName").value("Mouse"))
+                .andExpect(jsonPath("$.content[2].productName").value("Monitor"));
+
+        assertThat(statistics.getPrepareStatementCount()).isLessThanOrEqualTo(2);
     }
 
     @Test

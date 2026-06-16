@@ -8,6 +8,8 @@ import com.example.miniproj.exception.OrderNotFoundException;
 import com.example.miniproj.exception.ProductNotFoundException;
 import com.example.miniproj.repository.OrderRepository;
 import com.example.miniproj.repository.ProductRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,5 +38,10 @@ public class OrderService {
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new OrderNotFoundException(id));
         return OrderResponse.from(order);
+    }
+
+    public Page<OrderResponse> getOrders(Pageable pageable) {
+        return orderRepository.findAll(pageable)
+                .map(OrderResponse::from);
     }
 }

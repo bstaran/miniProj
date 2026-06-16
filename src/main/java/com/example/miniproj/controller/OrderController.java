@@ -3,6 +3,8 @@ package com.example.miniproj.controller;
 import com.example.miniproj.dto.order.OrderCreateRequest;
 import com.example.miniproj.dto.order.OrderResponse;
 import com.example.miniproj.service.OrderService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -31,5 +33,10 @@ public class OrderController {
     @GetMapping("/{id}")
     public ResponseEntity<OrderResponse> getOrder(@PathVariable Long id) {
         return ResponseEntity.ok(orderService.getOrder(id));
+    }
+
+    @GetMapping
+    public ResponseEntity<Page<OrderResponse>> getOrders(Pageable pageable) {
+        return ResponseEntity.ok(orderService.getOrders(pageable));
     }
 }

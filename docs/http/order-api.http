@@ -24,6 +24,9 @@ Content-Type: application/json
 ### Get order
 GET {{baseUrl}}/orders/{{orderId}}
 
+### Get orders
+GET {{baseUrl}}/orders?page=0&size=10
+
 ### Update ordered product name
 PUT {{baseUrl}}/products/{{productId}}
 Content-Type: application/json
@@ -47,4 +50,3 @@ Content-Type: application/json
 
 ### Get missing order
 GET {{baseUrl}}/orders/999999
-
