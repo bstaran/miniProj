@@ -45,6 +45,79 @@ class ProductControllerTest {
     }
 
     @Test
+    void createProductWithBlankNameReturnsBadRequest() throws Exception {
+        mockMvc.perform(post("/products")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "name": " ",
+                                  "price": 30000,
+                                  "stockQuantity": 10
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("상품명은 필수입니다."));
+    }
+
+    @Test
+    void createProductWithNegativePriceReturnsBadRequest() throws Exception {
+        mockMvc.perform(post("/products")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "name": "Keyboard",
+                                  "price": -1,
+                                  "stockQuantity": 10
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("상품 가격은 0 이상이어야 합니다."));
+    }
+
+    @Test
+    void createProductWithoutPriceReturnsBadRequest() throws Exception {
+        mockMvc.perform(post("/products")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "name": "Keyboard",
+                                  "stockQuantity": 10
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("상품 가격은 필수입니다."));
+    }
+
+    @Test
+    void createProductWithNegativeStockQuantityReturnsBadRequest() throws Exception {
+        mockMvc.perform(post("/products")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "name": "Keyboard",
+                                  "price": 30000,
+                                  "stockQuantity": -1
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("상품 재고 수량은 0 이상이어야 합니다."));
+    }
+
+    @Test
+    void createProductWithoutStockQuantityReturnsBadRequest() throws Exception {
+        mockMvc.perform(post("/products")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "name": "Keyboard",
+                                  "price": 30000
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("상품 재고 수량은 필수입니다."));
+    }
+
+    @Test
     void getProducts() throws Exception {
         createProduct("Mouse", 15000, 20);
         createProduct("Monitor", 200000, 5);
@@ -86,6 +159,39 @@ class ProductControllerTest {
                 .andExpect(jsonPath("$.name").value("Office Chair"))
                 .andExpect(jsonPath("$.price").value(90000))
                 .andExpect(jsonPath("$.stockQuantity").value(4));
+    }
+
+    @Test
+    void updateProductWithBlankNameReturnsBadRequest() throws Exception {
+        Long productId = createProduct("Chair", 70000, 7);
+
+        mockMvc.perform(put("/products/{id}", productId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "name": " ",
+                                  "price": 90000,
+                                  "stockQuantity": 4
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("상품명은 필수입니다."));
+    }
+
+    @Test
+    void updateProductWithoutPriceReturnsBadRequest() throws Exception {
+        Long productId = createProduct("Chair", 70000, 7);
+
+        mockMvc.perform(put("/products/{id}", productId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "name": "Office Chair",
+                                  "stockQuantity": 4
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("상품 가격은 필수입니다."));
     }
 
     @Test

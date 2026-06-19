@@ -3,6 +3,7 @@ package com.example.miniproj.controller;
 import com.example.miniproj.dto.order.OrderCreateRequest;
 import com.example.miniproj.dto.order.OrderResponse;
 import com.example.miniproj.service.OrderService;
+import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -25,7 +26,7 @@ public class OrderController {
     }
 
     @PostMapping
-    public ResponseEntity<OrderResponse> createOrder(@RequestBody OrderCreateRequest request) {
+    public ResponseEntity<OrderResponse> createOrder(@Valid @RequestBody OrderCreateRequest request) {
         OrderResponse response = orderService.createOrder(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }

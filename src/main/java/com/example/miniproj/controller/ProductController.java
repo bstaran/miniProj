@@ -4,6 +4,7 @@ import com.example.miniproj.dto.product.ProductCreateRequest;
 import com.example.miniproj.dto.product.ProductResponse;
 import com.example.miniproj.dto.product.ProductUpdateRequest;
 import com.example.miniproj.service.ProductService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -33,7 +34,7 @@ public class ProductController {
     }
 
     @PostMapping
-    public ResponseEntity<ProductResponse> createProduct(@RequestBody ProductCreateRequest request) {
+    public ResponseEntity<ProductResponse> createProduct(@Valid @RequestBody ProductCreateRequest request) {
         ProductResponse response = productService.createProduct(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
@@ -46,7 +47,7 @@ public class ProductController {
     @PutMapping("/{id}")
     public ResponseEntity<ProductResponse> updateProduct(
             @PathVariable Long id,
-            @RequestBody ProductUpdateRequest request
+            @Valid @RequestBody ProductUpdateRequest request
     ) {
         return ResponseEntity.ok(productService.updateProduct(id, request));
     }

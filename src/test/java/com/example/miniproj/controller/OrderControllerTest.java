@@ -56,6 +56,64 @@ class OrderControllerTest {
     }
 
     @Test
+    void createOrderWithoutProductIdReturnsBadRequest() throws Exception {
+        mockMvc.perform(post("/orders")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "quantity": 1
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("상품 ID는 필수입니다."));
+    }
+
+    @Test
+    void createOrderWithNonPositiveProductIdReturnsBadRequest() throws Exception {
+        mockMvc.perform(post("/orders")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "productId": 0,
+                                  "quantity": 1
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("상품 ID는 1 이상이어야 합니다."));
+    }
+
+    @Test
+    void createOrderWithoutQuantityReturnsBadRequest() throws Exception {
+        Long productId = createProduct("Keyboard", 30000, 10);
+
+        mockMvc.perform(post("/orders")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "productId": %d
+                                }
+                                """.formatted(productId)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("주문 수량은 필수입니다."));
+    }
+
+    @Test
+    void createOrderWithNonPositiveQuantityReturnsBadRequest() throws Exception {
+        Long productId = createProduct("Keyboard", 30000, 10);
+
+        mockMvc.perform(post("/orders")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "productId": %d,
+                                  "quantity": 0
+                                }
+                                """.formatted(productId)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("주문 수량은 1 이상이어야 합니다."));
+    }
+
+    @Test
     void createOrderDecreasesProductStock() throws Exception {
         Long productId = createProduct("Keyboard", 30000, 10);
 
@@ -261,7 +319,7 @@ class OrderControllerTest {
                                 }
                                 """.formatted(productId)))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").value("Order quantity must be greater than 0."));
+                .andExpect(jsonPath("$.message").value("주문 수량은 1 이상이어야 합니다."));
     }
 
     @Test
